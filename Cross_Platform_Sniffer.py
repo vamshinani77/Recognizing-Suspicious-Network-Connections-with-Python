@@ -3,7 +3,7 @@ from scapy.utils import PcapWriter
 from datetime import *#datetime, timedelta
 import os, sys, signal
 #Defines then runs a signal handler because the 'while' loop can get
-sticky in the console. This helps ctrl-c out nicely.
+#sticky in the console. This helps ctrl-c out nicely.
 def signal_handler(signal, frame):
     print("\nprogram exiting gracefully")
     sys.exit(0)
@@ -39,7 +39,7 @@ if platform in winplat:
                     # DNS parsing for to record multiple DNS entries and extract/normalize PTR requests
                     ## Without this loop only the first DNS entry will be returned and the PTR records will be missed.
                 if packet.haslayer(UDP): # Triggers if a UDP packet
-                    UDPipS.append(packet[IP].dst) #Adds the packet to ta temp list for PCAP incl
+                    UDPipS.append(packet.dst) #Adds the packet to ta temp list for PCAP incl
                     if packet.haslayer(DNSRR): # If there is a DNS Response
                         a_count = packet[DNS].ancount
                         #Find how many answers returned
@@ -125,10 +125,8 @@ elif platform == "darwin":
     stop = now + timedelta(seconds=120) #amount of time the script will run for. Can do minutes=x or hours=x
     try:
         while datetime.now() < stop:
-            #TCP Syn + SynAck packet capture and DNS port 53
-            packet capture.
-            packets = sniff(filter="tcp[tcpflags] & (tcp-syn)!=0 or port 53",
-            session=IPSession, # defragment on-the-flow
+            #TCP Syn + SynAck packet capture and DNS port 53 packet capture
+            packets = sniff(filter="tcp[tcpflags] & (tcp-syn)!=0 or port 53",session=IPSession, # defragment on-the-flow
             count=2,# 2 packets before the script continues
             prn=lambda x: x.summary()) #prints out the tcp syn/synack and DNS req/resp
             #Append to 'sniffed.pcap' all Syn/Ack traffic or
@@ -151,19 +149,17 @@ elif platform == "darwin":
                     #PTR records will be missed.
                 if packet.haslayer(UDP): # Triggers if a UDP packet
                     UDPipS.append(packet[IP].dst) #Adds the packet to ta temp list for PCAP incl
-                        if packet.haslayer(DNSRR): # If there is a DNS Response
-                            a_count = packet[DNS].ancount
-                            #Find how many answers returned
-                            i = a_count + 4
-                            arp = "arpa"
-                            while i > 4:
-                            if
-                                str(packet[0][i].rdata)[0].isdigit():
+                    if packet.haslayer(DNSRR): # If there is a DNS Response
+                        a_count = packet[DNS].ancount
+                        #Find how many answers returned
+                        i = a_count + 4
+                        arp = "arpa"
+                        while i > 4:
+                            if str(packet[0][i].rdata)[0].isdigit():
                                 #print(packet[0][i].rdata)
                                 UDPipS.append(packet[0][i].rdata)
                                 #Useing 'count' to see ifthe telltale PTR lookup string is in the rrname field                                
-                            elif
-                                packet[0][i].rrname.decode().count("in-addr.arpa")>0:
+                            elif packet[0][i].rrname.decode().count("in-addr.arpa")>0:
                                 #print(packet[0][i].rrname.decode())
                                 base =(packet[0][i].rrname.decode())
                                 chop = base[:-14]
